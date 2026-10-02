@@ -1,6 +1,6 @@
 # FreeRTOS IoT Environmental Monitor with CAN Bus
 
-[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![CI](https://github.com/Ankita-Experi/freertos-iot-env-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/Ankita-Experi/freertos-iot-env-monitor/actions/workflows/ci.yml)
 
 A real-time environmental monitoring node on an **STM32 Nucleo-F446RE (ARM Cortex-M4F)**
 running **FreeRTOS**. It samples a Bosch **BME280** over interrupt-driven I2C, broadcasts
@@ -82,7 +82,7 @@ USB-CAN adapter as the second bus node. Full wiring in [docs/hardware.md](docs/h
 Requirements: CMake ≥ 3.20, [Arm GNU Toolchain](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) (`arm-none-eabi-gcc`).
 
 ```bash
-git clone --recurse-submodules --shallow-submodules https://github.com/<you>/freertos-iot-env-monitor.git
+git clone --recurse-submodules --shallow-submodules https://github.com/Ankita-Experi/freertos-iot-env-monitor.git
 cd freertos-iot-env-monitor/firmware/stm32
 
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake
