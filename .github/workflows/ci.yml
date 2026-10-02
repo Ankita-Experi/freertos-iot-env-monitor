@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  firmware:
+    name: STM32 firmware (${{ matrix.variant }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - variant: debug
+            flags: -DCMAKE_BUILD_TYPE=Debug
+          - variant: release-can-selftest
+            flags: -DCMAKE_BUILD_TYPE=Release -DCAN_SELF_TEST=ON
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: '13.3.Rel1'
+
+      - name: Configure
+        working-directory: firmware/stm32
+        run: cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake ${{ matrix.flags }}
+
+      - name: Build
+        working-directory: firmware/stm32
+        run: cmake --build build -j
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: env_monitor-${{ matrix.variant }}
+          path: |
+            firmware/stm32/build/env_monitor.elf
+            firmware/stm32/build/env_monitor.bin
+            firmware/stm32/build/env_monitor.hex
+
+  host-tests:
+    name: Host unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Firmware logic (BME280, protocol) with ASan/UBSan
+        run: make -C firmware/stm32/test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Tools
+        run: |
+          pip install pytest
+          python -m pytest tools -q

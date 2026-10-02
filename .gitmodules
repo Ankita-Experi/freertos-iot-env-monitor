@@ -1,0 +1,16 @@
+[submodule "firmware/stm32/lib/FreeRTOS-Kernel"]
+	path = firmware/stm32/lib/FreeRTOS-Kernel
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel
+	shallow = true
+[submodule "firmware/stm32/lib/stm32f4xx-hal-driver"]
+	path = firmware/stm32/lib/stm32f4xx-hal-driver
+	url = https://github.com/STMicroelectronics/stm32f4xx-hal-driver
+	shallow = true
+[submodule "firmware/stm32/lib/cmsis-device-f4"]
+	path = firmware/stm32/lib/cmsis-device-f4
+	url = https://github.com/STMicroelectronics/cmsis-device-f4
+	shallow = true
+[submodule "firmware/stm32/lib/cmsis-core"]
+	path = firmware/stm32/lib/cmsis-core
+	url = https://github.com/STMicroelectronics/cmsis-core
+	shallow = true

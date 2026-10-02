@@ -1,0 +1,29 @@
+# Build outputs
+build/
+build-*/
+*.elf
+*.bin
+*.hex
+*.map
+firmware/stm32/test/test_host
+
+# IDE / tooling
+.vscode/
+.idea/
+.settings/
+.cproject
+.project
+*.launch
+Debug/
+Release/
+
+# Python
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+
+# Secrets -- never commit Wi-Fi credentials or API keys
+firmware/esp32-gateway/secrets.h
+
+.DS_Store
