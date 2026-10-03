@@ -1,13 +1,16 @@
 /*
- * CAN task: single owner of the bxCAN transmit path and command handler.
+ * CAN task: single owner of the bxCAN transmit path, the command handler and
+ * the UDS diagnostic server.
  *
  * Blocks on a queue set containing both the outgoing-frame queue (fed by the
  * sensor and health tasks) and the incoming-frame queue (fed by the RX ISR),
- * so one task services both directions without polling.
+ * so one task services both directions without polling. The block time is
+ * shortened whenever ISO-TP has a Consecutive Frame or timeout coming due.
  */
 
 #include "app.h"
 #include "can_bus.h"
+#include "diag.h"
 #include "log.h"
 
 #define TAG "can"
@@ -44,7 +47,9 @@ void can_task(void *arg)
     LOGE(TAG, "bxCAN start failed");
     board_fatal();
   }
-  LOGI(TAG, "bxCAN up: 500 kbit/s, filter 0x%03X/0x%03X, %s", CAN_ID_CMD_BASE, CAN_ID_CMD_MASK,
+  diag_init();
+  LOGI(TAG, "bxCAN up: 500 kbit/s, filters 0x%03X/0x%03X + UDS 0x%03X/0x%03X, %s",
+       CAN_ID_CMD_BASE, CAN_ID_CMD_MASK, CAN_ID_UDS_REQUEST_PHYS, CAN_ID_UDS_REQUEST_FUNC,
 #if defined(CAN_SELF_TEST)
        "silent-loopback"
 #else
@@ -55,13 +60,22 @@ void can_task(void *arg)
   uint32_t consecutive_tx_fail = 0;
 
   for (;;) {
-    QueueSetMemberHandle_t ready = xQueueSelectFromSet(qs_can, pdMS_TO_TICKS(HEARTBEAT_PERIOD_MS));
+    uint32_t wait_ms = diag_poll();
+    if (wait_ms > HEARTBEAT_PERIOD_MS) {
+      wait_ms = HEARTBEAT_PERIOD_MS;
+    }
+
+    QueueSetMemberHandle_t ready = xQueueSelectFromSet(qs_can, pdMS_TO_TICKS(wait_ms));
     xEventGroupSetBits(eg_heartbeat, HB_CAN);
 
     can_frame_t f;
     if (ready == q_can_rx) {
       if (xQueueReceive(q_can_rx, &f, 0) == pdTRUE) {
-        handle_frame(&f);
+        if (diag_accepts(f.std_id)) {
+          diag_on_frame(&f);
+        } else {
+          handle_frame(&f);
+        }
       }
     } else if (ready == q_can_tx) {
       if (xQueueReceive(q_can_tx, &f, 0) == pdTRUE) {

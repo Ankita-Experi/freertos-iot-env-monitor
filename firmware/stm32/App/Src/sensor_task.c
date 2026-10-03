@@ -94,6 +94,9 @@ void sensor_task(void *arg)
         };
         consecutive_errors = 0;
         g_sensor_ok = 1;
+        taskENTER_CRITICAL();
+        g_last_sample = s;
+        taskEXIT_CRITICAL();
         publish(&s);
 
         char t[16], h[16];

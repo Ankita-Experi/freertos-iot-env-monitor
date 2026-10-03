@@ -56,6 +56,10 @@ static void publish_status(uint8_t flags, const can_error_state_t *es)
     .uptime_s        = (uint32_t)(xTaskGetTickCount() / configTICK_RATE_HZ),
   };
 
+  taskENTER_CRITICAL();
+  g_last_status = st;
+  taskEXIT_CRITICAL();
+
   can_frame_t f = { .std_id = CAN_ID_NODE_STATUS, .dlc = 8 };
   protocol_pack_status(&st, f.data);
   if (xQueueSend(q_can_tx, &f, 0) != pdTRUE) g_queue_drops++;
@@ -132,6 +136,7 @@ void health_task(void *arg)
       }
     }
 
+    g_task_stalled = (uint8_t)stalled;
     if (!stalled) {
       board_iwdg_refresh();
       stall_reported = 0;

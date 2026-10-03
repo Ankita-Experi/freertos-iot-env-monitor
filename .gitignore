@@ -6,6 +6,8 @@ build-*/
 *.hex
 *.map
 firmware/stm32/test/test_host
+firmware/stm32/test/test_diag
+firmware/stm32/test/libdiag.so
 
 # IDE / tooling
 .vscode/

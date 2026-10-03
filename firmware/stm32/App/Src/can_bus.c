@@ -36,6 +36,22 @@ static void configure_filter(void)
   if (HAL_CAN_ConfigFilter(&hcan, &f) != HAL_OK) {
     board_fatal();
   }
+
+  /*
+   * Bank 1, 32-bit identifier-list mode: exactly two IDs, the UDS physical
+   * (0x7E0) and functional (0x7DF) request addresses. In list mode the
+   * "mask" registers hold the second ID instead of a mask.
+   */
+  CAN_FilterTypeDef u = f;
+  u.FilterBank       = 1;
+  u.FilterMode       = CAN_FILTERMODE_IDLIST;
+  u.FilterIdHigh     = (uint32_t)(CAN_ID_UDS_REQUEST_PHYS << 5);
+  u.FilterIdLow      = 0x0000;                     /* IDE = 0, RTR = 0 */
+  u.FilterMaskIdHigh = (uint32_t)(CAN_ID_UDS_REQUEST_FUNC << 5);
+  u.FilterMaskIdLow  = 0x0000;
+  if (HAL_CAN_ConfigFilter(&hcan, &u) != HAL_OK) {
+    board_fatal();
+  }
 }
 
 int can_bus_start(QueueHandle_t rx_queue)

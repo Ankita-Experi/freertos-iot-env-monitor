@@ -15,7 +15,8 @@
  *       node to ACK, every automatic retransmission raises an ACK error, which
  *       turns into an interrupt storm (~10 k IRQ/s). LEC is sampled by polling.
  *
- *  Filter: bank 0, 32-bit mask mode, accepts standard data frames 0x200-0x20F.
+ *  Filter: bank 0, 32-bit mask mode, accepts standard data frames 0x200-0x20F;
+ *          bank 1, 32-bit list mode, accepts UDS requests 0x7E0 and 0x7DF.
  */
 
 #include <stdint.h>

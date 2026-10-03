@@ -26,6 +26,11 @@ typedef struct {
 #define CAN_ID_CMD_BASE      0x200u  /* bus -> node, 0x200-0x20F accepted by filter */
 #define CAN_ID_CMD_MASK      0x7F0u
 
+/* UDS diagnostics over ISO-TP (see docs/protocols.md) */
+#define CAN_ID_UDS_REQUEST_PHYS  0x7E0u  /* tester -> this node */
+#define CAN_ID_UDS_REQUEST_FUNC  0x7DFu  /* tester -> all nodes */
+#define CAN_ID_UDS_RESPONSE      0x7E8u  /* this node -> tester */
+
 #define CAN_CMD_SET_PERIOD     0x01u /* data[1..2] = period ms (LE), 100..10000 */
 #define CAN_CMD_REQUEST_STATUS 0x02u /* reply with one NODE_STATUS frame now      */
 

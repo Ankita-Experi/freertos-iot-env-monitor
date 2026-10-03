@@ -23,6 +23,10 @@ volatile uint32_t g_sample_period_ms = SAMPLE_PERIOD_DEFAULT_MS;
 volatile uint8_t  g_sensor_ok;
 volatile uint32_t g_sensor_errors;
 volatile uint32_t g_queue_drops;
+volatile uint8_t  g_task_stalled;
+
+env_sample_t  g_last_sample;
+node_status_t g_last_status;
 
 clock_source_t g_clock_source;
 reset_cause_t  g_reset_cause;

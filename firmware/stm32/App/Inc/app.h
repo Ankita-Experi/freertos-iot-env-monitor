@@ -6,7 +6,7 @@
  *
  *   Task     Prio  Stack  Period / trigger           Talks to
  *   -------  ----  -----  -------------------------  ------------------------------
- *   can      4     256 w  q_can_tx | q_can_rx (set)  bxCAN mailboxes, sensor period
+ *   can      4     384 w  q_can_tx | q_can_rx (set)  bxCAN mailboxes, UDS server, sensor period
  *   sensor   3     384 w  xTaskDelayUntil, 1 s def.  I2C (IT + binary sem) -> queues
  *   uplink   2     384 w  q_uplink                   USART1 -> ESP32 (mutex)
  *   health   1     384 w  1 s, or task notification  IWDG, CAN status, console
@@ -31,7 +31,7 @@
 #define PRIO_UPLINK  (tskIDLE_PRIORITY + 2)
 #define PRIO_HEALTH  (tskIDLE_PRIORITY + 1)
 
-#define STACK_CAN     256u   /* words */
+#define STACK_CAN     384u   /* words (UDS handling + logging) */
 #define STACK_SENSOR  384u
 #define STACK_UPLINK  384u
 #define STACK_HEALTH  384u
@@ -75,6 +75,11 @@ extern volatile uint32_t g_sample_period_ms;  /* written by CAN task, read by se
 extern volatile uint8_t  g_sensor_ok;
 extern volatile uint32_t g_sensor_errors;
 extern volatile uint32_t g_queue_drops;       /* any producer that found a queue full */
+extern volatile uint8_t  g_task_stalled;      /* set by the health task */
+
+/* Latest values, read by the UDS server. Copy under taskENTER_CRITICAL(). */
+extern env_sample_t  g_last_sample;           /* written by the sensor task */
+extern node_status_t g_last_status;           /* written by the health task */
 
 extern clock_source_t g_clock_source;
 extern reset_cause_t  g_reset_cause;
