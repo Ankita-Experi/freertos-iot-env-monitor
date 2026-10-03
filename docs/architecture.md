@@ -35,6 +35,7 @@ flowchart LR
   TXISR(["CAN TX ISR"]) -- "counting sem (3 mailboxes)" --> C
   C -- "task notification<br/>(status request)" --> H
   C -- "g_sample_period_ms" --> S
+  C <-->|"ISO-TP / UDS<br/>0x7E0 · 0x7DF → 0x7E8"| T(["UDS tester"])
   S -- "uplink_msg_t" --> QUP[[q_uplink · 4]]
   H -- "uplink_msg_t" --> QUP
   QUP --> U[uplink]
@@ -44,7 +45,7 @@ flowchart LR
 
 | Task | Prio | Stack | Blocks on | Responsibility |
 |------|------|-------|-----------|----------------|
-| `can` | 4 | 256 w | queue set (`q_can_tx` + `q_can_rx`), 500 ms timeout | Sole owner of bxCAN TX; parses commands |
+| `can` | 4 | 384 w | queue set (`q_can_tx` + `q_can_rx`); timeout shortened while ISO-TP has frames due | Sole owner of bxCAN TX; parses commands; runs the UDS diagnostic server |
 | `sensor` | 3 | 384 w | `xTaskDelayUntil` (default 1 s); I2C completion semaphore | BME280 forced-mode sampling, fan-out to CAN + uplink |
 | `uplink` | 2 | 384 w | `q_uplink`, 500 ms timeout | Checksummed ASCII lines to ESP32 over USART1 |
 | `health` | 1 | 384 w | task notification, 1 s timeout | Heartbeat supervision, IWDG, status frames, diagnostics |
@@ -70,6 +71,15 @@ flowchart LR
 | Queue set | CAN task | Wait on TX and RX queues at once without polling. |
 | Direct task notification | CAN → health | Lightest-weight "wake up now" signal; no kernel object needed. |
 | Event group | heartbeats | Each task sets its own bit; health reads-and-clears all bits atomically with `xEventGroupClearBits`. |
+
+## Diagnostics (UDS)
+
+The CAN task also hosts a UDS (ISO 14229-1) server over ISO-TP (ISO 15765-2).
+Keeping it in the task that already owns CAN TX means the ISO-TP and UDS state
+needs no locking. Data the server reports (the latest sample, node status) is
+copied out of other tasks' snapshots inside short critical sections, and DTCs
+are re-evaluated on every pass from flags those tasks already publish.
+Protocol details are in [protocols.md](protocols.md#uds-diagnostics--iso-14229-1-over-iso-tp-iso-15765-2).
 
 ## Interrupt priorities
 
@@ -107,7 +117,7 @@ TIM6 — see `Core/Src/hal_timebase_tim6.c`.
 
 | Region | Used | Of |
 |--------|------|----|
-| Flash | ~37 KB | 512 KB |
+| Flash | ~42 KB | 512 KB |
 | RAM | ~37 KB | 128 KB (32 KB of it is the FreeRTOS heap) |
 
 The health task logs per-task stack high-water marks every 30 s so the stack sizes in

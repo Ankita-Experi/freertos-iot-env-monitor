@@ -14,6 +14,10 @@
 pipeline {
     agent any
 
+    environment {
+        TOOLCHAIN = 'cmake/arm-none-eabi.cmake'
+    }
+
     options {
         timestamps()
         timeout(time: 30, unit: 'MINUTES')
@@ -70,7 +74,7 @@ pipeline {
                 stage('Debug') {
                     steps {
                         dir('firmware/stm32') {
-                            sh 'cmake -B build-debug -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake -DCMAKE_BUILD_TYPE=Debug'
+                            sh 'cmake -B build-debug -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN" -DCMAKE_BUILD_TYPE=Debug'
                             sh 'cmake --build build-debug -j "$(nproc)"'
                         }
                     }
@@ -78,7 +82,10 @@ pipeline {
                 stage('Release, CAN self-test') {
                     steps {
                         dir('firmware/stm32') {
-                            sh 'cmake -B build-selftest -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake -DCMAKE_BUILD_TYPE=Release -DCAN_SELF_TEST=ON'
+                            sh '''
+                                cmake -B build-selftest -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN" \
+                                      -DCMAKE_BUILD_TYPE=Release -DCAN_SELF_TEST=ON
+                            '''
                             sh 'cmake --build build-selftest -j "$(nproc)"'
                         }
                     }
@@ -89,9 +96,8 @@ pipeline {
 
     post {
         success {
-            archiveArtifacts artifacts: 'firmware/stm32/build-*/env_monitor.elf, firmware/stm32/build-*/env_monitor.bin, ' +
-                                        'firmware/stm32/build-*/env_monitor.hex, firmware/stm32/build-*/env_monitor.map',
-                             fingerprint: true
+            // env_monitor.elf / .bin / .hex / .map from both builds
+            archiveArtifacts artifacts: 'firmware/stm32/build-*/env_monitor.*', fingerprint: true
         }
         failure {
             echo 'Build failed: open the failing stage in Stage View / Blue Ocean for its log.'
