@@ -1,0 +1,5 @@
+workflow-aggregator
+git
+junit
+timestamper
+pipeline-stage-view
